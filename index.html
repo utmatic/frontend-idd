@@ -4,35 +4,139 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>InDesign Processor</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      max-width: 600px;
+      margin: 40px auto;
+      padding: 20px;
+      background: #f9f9f9;
+      border-radius: 8px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    h1 {
+      text-align: center;
+    }
+    label {
+      display: block;
+      margin: 12px 0 4px;
+    }
+    input[type="text"], textarea, input[type="file"] {
+      width: 100%;
+      padding: 8px;
+      margin-bottom: 12px;
+    }
+    button {
+      background: #0073e6;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      font-size: 1rem;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+    button:hover {
+      background: #005bb5;
+    }
+    .loading {
+      margin: 20px 0;
+      color: #0073e6;
+      font-weight: bold;
+    }
+    .download-links {
+      margin-top: 20px;
+    }
+    .download-links a {
+      display: block;
+      margin: 8px 0;
+      color: #0073e6;
+      text-decoration: none;
+    }
+  </style>
 </head>
 <body>
   <h1>Submit InDesign File for Processing</h1>
-  <form action="https://backend-idd.onrender.com/upload/" method="post" enctype="multipart/form-data">
+
+  <form id="uploadForm">
     <label>Upload InDesign File (.indd):
       <input type="file" name="file" accept=".indd" required>
-    </label><br><br>
+    </label>
 
     <label>Target Formats (one per line, e.g., NNNN-NNNN):
       <textarea name="target_formats" rows="5" cols="40" required></textarea>
-    </label><br><br>
+    </label>
 
     <label>Base URL:
       <input type="text" name="base_url" value="https://www.agilent.com/store/productDetail.jsp?catalogId=" required>
-    </label><br><br>
+    </label>
 
     <label>UTM Source:
       <input type="text" name="utm_source" required>
-    </label><br>
+    </label>
 
     <label>UTM Medium:
       <input type="text" name="utm_medium" required>
-    </label><br>
+    </label>
 
     <label>UTM Campaign:
       <input type="text" name="utm_campaign" required>
-    </label><br><br>
+    </label>
 
     <button type="submit">Submit</button>
   </form>
+
+  <div id="status" class="loading"></div>
+  <div id="download-links" class="download-links"></div>
+
+  <script>
+    const form = document.getElementById("uploadForm");
+    const statusDiv = document.getElementById("status");
+    const downloadDiv = document.getElementById("download-links");
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      statusDiv.textContent = "Uploading... Please wait.";
+      downloadDiv.innerHTML = "";
+
+      const formData = new FormData(form);
+      try {
+        const res = await fetch("https://backend-idd.onrender.com/upload/", {
+          method: "POST",
+          body: formData
+        });
+
+        if (!res.ok) throw new Error("Upload failed");
+        const data = await res.json();
+        const jobId = data.job_id;
+        statusDiv.textContent = "File uploaded. Processing started...";
+        pollDownloadLinks(jobId);
+      } catch (err) {
+        statusDiv.textContent = "Error: " + err.message;
+      }
+    });
+
+    async function pollDownloadLinks(jobId) {
+      const interval = setInterval(async () => {
+        try {
+          const res = await fetch(`https://backend-idd.onrender.com/download/${jobId}`);
+          if (res.ok) {
+            const data = await res.json();
+            clearInterval(interval);
+            statusDiv.textContent = "Processing complete! Download your files:";
+            showDownloadLinks(data.indd_url, data.report_url);
+          }
+        } catch (err) {
+          console.log("Polling...");
+        }
+      }, 3000);
+    }
+
+    function showDownloadLinks(inddUrl, reportUrl) {
+      downloadDiv.innerHTML = `
+        <a href="${inddUrl}" download>Download Processed InDesign File</a>
+        <a href="${reportUrl}" download>Download Hyperlink Report</a>
+      `;
+    }
+  </script>
 </body>
 </html>
