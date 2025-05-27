@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>InDesign Processor</title>
+</head>
+<body>
+  <h1>Submit InDesign File for Processing</h1>
+  <form action="http://localhost:8000/upload/" method="post" enctype="multipart/form-data">
+    <label>Upload InDesign File (.indd):
+      <input type="file" name="file" accept=".indd" required>
+    </label><br><br>
+
+    <label>Target Formats (one per line, e.g., NNNN-NNNN):
+      <textarea name="target_formats" rows="5" cols="40" required></textarea>
+    </label><br><br>
+
+    <label>Base URL:
+      <input type="text" name="base_url" value="https://www.agilent.com/store/productDetail.jsp?catalogId=" required>
+    </label><br><br>
+
+    <label>UTM Source:
+      <input type="text" name="utm_source" required>
+    </label><br>
+
+    <label>UTM Medium:
+      <input type="text" name="utm_medium" required>
+    </label><br>
+
+    <label>UTM Campaign:
+      <input type="text" name="utm_campaign" required>
+    </label><br><br>
+
+    <button type="submit">Submit</button>
+  </form>
+</body>
+</html>
